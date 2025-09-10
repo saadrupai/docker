@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  test-app-1:
+    build:
+      context: ./test-app-1       # Path to service1 Dockerfile
+    container_name: test-app-1
+    ports:
+      - "8085:8080"
+    env_file:
+      - ./test-app-1/.env
+    networks:
+      - test
+    depends_on:
+      - test-app-2
+
+  test-app-2:
+    build:
+      context: ./test-app-2          # Path to test2 Dockerfile
+    container_name: test-app-2
+    ports:
+      - "8095:8090"
+    env_file:
+      - ./test-app-2/.env
+    networks:
+      - test
+
+networks:
+  test:
+    driver: bridge

@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  test-app-1:
+    build: 
+      context: ./test-app-1
+    ports:
+      - "8075:8070"
+    env_file:
+      - ./test-app-1/.env
+    depends_on:
+      - test-app-2
+    networks:
+      - net1
+
+  test-app-2:
+    build:
+      context: ./test-app-2
+    ports:
+      - "8085:8080"
+    env_file:
+      - ./test-app-2/.env
+    depends_on:
+      - test-app-3
+    networks:
+      - net1
+      - net2
+      
+  test-app-3:
+    build:
+      context: ./test-app-3
+    ports:
+      - "8095:8090"
+    env_file:
+      - ./test-app-3/.env
+    networks:
+      - net2
+
+networks:
+  net1:
+    driver: bridge
+  net2:
+    driver: bridge
+  net3:
+    driver: bridge
