@@ -41,5 +41,3 @@ networks:
     driver: bridge
   net2:
     driver: bridge
-  net3:
-    driver: bridge
