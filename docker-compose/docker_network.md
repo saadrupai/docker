@@ -43,5 +43,5 @@ This process ensures that each container receives a unique IP address within the
 - User-defined networks allow custom networking between containers with hostname and IP-based communication.
 - Network isolation ensures that containers on different networks cannot communicate unless explicitly routed.
 
-This overview captures the essential Docker networking components and how they interact to provide flexible and isolated networking for containerized environments.[^1][^5][^7][^9]
+This overview captures the essential Docker networking components and how they interact to provide flexible and isolated networking for containerized environments.
 
