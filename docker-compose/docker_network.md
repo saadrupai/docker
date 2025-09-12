@@ -1,3 +1,4 @@
+## Docker Network
 Docker networking is a system that enables Docker containers to communicate with each other, the Docker host, and external networks. It offers isolation and connectivity through various components and drivers that manage how containers interact in a networked environment
 
 ### Overview of Docker Network Components
