@@ -21,7 +21,7 @@ This project demonstrates setting up a Docker Swarm cluster with overlay network
 
 Run:
 ```
-vagrant up
+vagrant up --provider=libvirt
 ```
 This creates and configures 3 VMs with static private IPs, Docker installed, and network settings for Swarm.
 
