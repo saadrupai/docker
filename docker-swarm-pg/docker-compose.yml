@@ -5,14 +5,14 @@ services:
     image: bitnami/postgresql:14
     environment:
       - POSTGRESQL_USERNAME=postgres
-      - POSTGRESQL_PASSWORD=masterpass # superuser password
+      - POSTGRESQL_PASSWORD=masterpass
       - POSTGRESQL_DATABASE=mydb
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=repl_user
       - POSTGRESQL_REPLICATION_PASSWORD=replpass
     volumes:
       - master_data:/bitnami/postgresql
-      - ./initdb:/docker-entrypoint-initdb.d # initial SQL for first run
+      - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - overlay_internal
     deploy:
@@ -43,7 +43,6 @@ services:
   pgpool:
     image: bitnami/pgpool:4
     environment:
-      # backend nodes: first item index 0 = master, others replicas
       - PGPOOL_BACKEND_NODES=0:postgres-master:5432,1:postgres-replica:5432,2:postgres-replica:5432
       - PGPOOL_SR_CHECK_USER=repl_user
       - PGPOOL_SR_CHECK_PASSWORD=replpass
@@ -51,7 +50,7 @@ services:
       - PGPOOL_POSTGRES_USERNAME=postgres
       - PGPOOL_POSTGRES_PASSWORD=masterpass
     ports:
-      - "5432:5432" # publish pgpool on host (routing mesh)
+      - "5432:5432"
     networks:
       - overlay_internal
       - overlay_external
