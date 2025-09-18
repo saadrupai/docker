@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  postgres-master:
+    image: bitnami/postgresql:14
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=masterpass # superuser password
+      - POSTGRESQL_DATABASE=mydb
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=replpass
+    volumes:
+      - master_data:/bitnami/postgresql
+      - ./initdb:/docker-entrypoint-initdb.d # initial SQL for first run
+    networks:
+      - overlay_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  postgres-replica:
+    image: bitnami/postgresql:14
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=postgres-master
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=replpass
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=replicapass
+      - POSTGRESQL_DATABASE=mydb
+    volumes:
+      - replica_data:/bitnami/postgresql
+    networks:
+      - overlay_internal
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  pgpool:
+    image: bitnami/pgpool:4
+    environment:
+      # backend nodes: first item index 0 = master, others replicas
+      - PGPOOL_BACKEND_NODES=0:postgres-master:5432,1:postgres-replica:5432,2:postgres-replica:5432
+      - PGPOOL_SR_CHECK_USER=repl_user
+      - PGPOOL_SR_CHECK_PASSWORD=replpass
+      - PGPOOL_ENABLE_LOAD_BALANCING=yes
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=masterpass
+    ports:
+      - "5432:5432" # publish pgpool on host (routing mesh)
+    networks:
+      - overlay_internal
+      - overlay_external
+    depends_on:
+      - postgres-master
+      - postgres-replica
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks:
+  overlay_internal:
+    external: true
+  overlay_external:
+    external: true
+
+volumes:
+  master_data:
+  replica_data:
