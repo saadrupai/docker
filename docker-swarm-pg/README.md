@@ -46,7 +46,7 @@ docker run --rm -it --network overlay_external postgres:14 \
 
 ---
 
-## Testing & Validation
+Testing & Validation:
 
 1. Create table:
 ```
