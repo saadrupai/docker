@@ -10,9 +10,6 @@ services:
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=repl_user
       - POSTGRESQL_REPLICATION_PASSWORD=replpass
-    volumes:
-      - master_data:/bitnami/postgresql
-      - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - overlay_internal
     deploy:
@@ -29,10 +26,8 @@ services:
       - POSTGRESQL_REPLICATION_USER=repl_user
       - POSTGRESQL_REPLICATION_PASSWORD=replpass
       - POSTGRESQL_USERNAME=postgres
-      - POSTGRESQL_PASSWORD=replicapass
+      - POSTGRESQL_PASSWORD=masterpass
       - POSTGRESQL_DATABASE=mydb
-    volumes:
-      - replica_data:/bitnami/postgresql
     networks:
       - overlay_internal
     deploy:
@@ -43,12 +38,15 @@ services:
   pgpool:
     image: bitnami/pgpool:4
     environment:
-      - PGPOOL_BACKEND_NODES=0:postgres-master:5432,1:postgres-replica:5432,2:postgres-replica:5432
+      - PGPOOL_BACKEND_NODES=0:postgres-master:5432,1:postgres-replica:5432
       - PGPOOL_SR_CHECK_USER=repl_user
       - PGPOOL_SR_CHECK_PASSWORD=replpass
       - PGPOOL_ENABLE_LOAD_BALANCING=yes
       - PGPOOL_POSTGRES_USERNAME=postgres
       - PGPOOL_POSTGRES_PASSWORD=masterpass
+      - PGPOOL_POSTGRES_DATABASE=mydb
+      - PGPOOL_ADMIN_USERNAME=admin
+      - PGPOOL_ADMIN_PASSWORD=adminpass
     ports:
       - "5432:5432"
     networks:
@@ -67,7 +65,3 @@ networks:
     external: true
   overlay_external:
     external: true
-
-volumes:
-  master_data:
-  replica_data:

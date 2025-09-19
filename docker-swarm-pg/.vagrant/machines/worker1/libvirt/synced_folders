@@ -1,1 +1,1 @@
-{}
+{"rsync":{"/vagrant":{"disabled":false,"guestpath":"/vagrant","hostpath":"/home/saadrupai/Documents/learning/docker/docker-swarm-pg","__vagrantfile":true,"owner":"vagrant","group":"vagrant"}}}
