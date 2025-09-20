@@ -1,0 +1,58 @@
+Vagrant.configure("2") do |config|
+  config.vm.synced_folder ".", "/vagrant"
+  config.vm.box = "generic/ubuntu2004"
+
+  common_sh = <<-SHELL
+      sudo apt-get update -y
+      sudo apt-get install -y \
+          apt-transport-https \
+          ca-certificates \
+          curl \
+          gnupg \
+          lsb-release \
+          software-properties-common
+
+      # Add Docker's official GPG key
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+      # Add Docker repo
+      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      # Install Docker
+      sudo apt-get update -y
+      sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+      # Add vagrant user to docker group
+      sudo usermod -aG docker vagrant
+
+      # Enable Docker service
+      sudo systemctl enable docker
+      sudo systemctl start docker
+
+      # Wait until manager responds to ping
+      until ping -c1 192.168.100.101 &>/dev/null; do
+        echo "Waiting for swarm manager (192.168.100.101)..."
+        sleep 5
+      done
+
+      # Run the join command (script synced from manager VM)
+      if [ -f /vagrant/worker_token.sh ]; then
+        bash /vagrant/worker_token.sh || true
+      else
+        echo "ERROR: worker_token.sh not found. Did you start the manager first?"
+      fi
+  SHELL
+
+  ["worker1", "worker2"].each_with_index do |name, i|
+    config.vm.define name do |w|
+      w.vm.hostname = "swarm-#{name}"
+      w.vm.network "private_network", ip: "192.168.100.10#{i+2}"
+      w.vm.provider "libvirt" do |lv|
+          lv.memory = 2048
+      end
+      w.vm.provision "shell", inline: common_sh
+    end
+  end
+end

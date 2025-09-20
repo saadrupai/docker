@@ -1,0 +1,54 @@
+Vagrant.configure("2") do |config|
+  config.vm.synced_folder ".", "/vagrant"
+  config.vm.box = "generic/ubuntu2004"
+
+  manager_sh = <<-SHELL
+      sudo apt-get update -y
+      sudo apt-get install -y \
+          apt-transport-https \
+          ca-certificates \
+          curl \
+          gnupg \
+          lsb-release \
+          software-properties-common
+
+      # Add Docker's official GPG key
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+      # Add Docker repo
+      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      # Install Docker
+      sudo apt-get update -y
+      sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+      # Add vagrant user to docker group
+      sudo usermod -aG docker vagrant
+
+      # Enable Docker service
+      sudo systemctl enable docker
+      sudo systemctl start docker
+
+      # Initialize Docker Swarm if not already done
+      if ! docker info | grep -q "Swarm: active"; then
+        docker swarm init --advertise-addr 192.168.100.101
+      fi
+
+      # Save worker join token into synced folder
+      docker swarm join-token worker -q > /vagrant/worker_token.txt
+      echo "docker swarm join --token $(cat /vagrant/worker_token.txt) 192.168.100.101:2377" > /vagrant/worker_token.sh
+      chmod +x /vagrant/worker_token.sh
+  SHELL
+
+  config.vm.define "manager" do |m|
+    m.vm.hostname = "swarm-manager"
+    m.vm.network "private_network", ip: "192.168.100.101"
+    m.vm.provider "libvirt" do |lv|
+        lv.memory = 2048
+        lv.cpus = 2
+    end
+    m.vm.provision "shell", inline: manager_sh
+  end
+end
