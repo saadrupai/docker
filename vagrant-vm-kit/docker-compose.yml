@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  frontend:
+    depends_on:
+      - api
+    image: nginx:alpine
+    ports:
+      - "80:80" # published on host via routing mesh (ingress)
+    networks:
+      - overlay_external
+      - overlay_internal
+    configs:
+      - source: nginx_conf
+        target: /etc/nginx/conf.d/default.conf
+    deploy:
+      replicas: 2
+
+  api:
+    image: traefik/whoami
+    commands:
+      - --port=8080
+    networks:
+      - overlay_internal
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+
+networks:
+  overlay_internal:
+    driver: overlay
+    attachable: true
+  overlay_external:
+    driver: overlay
+    attachable: true
+
+
+configs:
+  nginx_conf:
+    file: ./nginx.conf
